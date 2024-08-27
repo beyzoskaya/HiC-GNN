@@ -1,0 +1,2 @@
+Optimal conversion factor: 0.4
+Optimal dSCC: 0.8074002899996215
