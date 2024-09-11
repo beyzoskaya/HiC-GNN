@@ -1,0 +1,3 @@
+Optimal conversion factor: 0.1
+Optimal dSCC: 0.9155908315978833
+Final MSE loss: 0.003079393645748496
