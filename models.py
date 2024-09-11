@@ -15,16 +15,23 @@ class Net(torch.nn.Module):
     self.dense3 = Linear(64,3)
   
   def forward(self, x, edge_index):
+    print(f"Input x shape: {x.shape}")
     x = self.conv(x, edge_index)
+    print(f"Shape after conv: {x.shape}")
     x = x.relu() # non-linearity preserved for complex patterns
     x = self.densea(x)
+    print(f"Shape after densea: {x.shape}")
     x = x.relu()
     x = self.dense1(x)
+    print(f"Shape after dense1: {x.shape}")
     x = x.relu()
     x = self.dense2(x)
+    print(f"Shape after dense2: {x.shape}")
     x = x.relu()
     x = self.dense3(x)
+    print(f"Shape after dense3: {x.shape}")
     x = cdist(x, x, p=2)
+    print(f"Shape after cdist: {x.shape}")
 
     return x
 
@@ -43,16 +50,37 @@ class Net(torch.nn.Module):
 
 # Total number of parameters in this case: 697475
 
-class SmallerNet(torch.nn.Module):
-  def _init_(self):
+class SmallerNet(torch.nn.Module): 
+  def __init__(self):
     super(SmallerNet, self).__init__()
-    self.conv = SAGEConv(256,256)
+    self.conv = SAGEConv(512, 256)  # Update input channels to 512
     self.densea = Linear(256, 128)
     self.dense1 = Linear(128, 64)
     self.dense2 = Linear(64, 32)
     self.dense3 = Linear(32, 3)
   
   def forward(self, x, edge_index):
+    #print(f"Input x shape: {x.shape}")
+    x = self.conv(x, edge_index)
+    #print(f"Shape after conv: {x.shape}")
+    x = x.relu() # non-linearity preserved for complex patterns
+    x = self.densea(x)
+    #print(f"Shape after densea: {x.shape}")
+    x = x.relu()
+    x = self.dense1(x)
+    #print(f"Shape after dense1: {x.shape}")
+    x = x.relu()
+    x = self.dense2(x)
+    #print(f"Shape after dense2: {x.shape}")
+    x = x.relu()
+    x = self.dense3(x)
+    #print(f"Shape after dense3: {x.shape}")
+    x = cdist(x, x, p=2)
+    #print(f"Shape after cdist: {x.shape}")
+
+    return x
+
+  def get_model(self, x, edge_index):
     x = self.conv(x, edge_index)
     x = x.relu()
     x = self.densea(x)
@@ -64,6 +92,5 @@ class SmallerNet(torch.nn.Module):
     x = self.dense3(x)
 
     return x 
-
-# Total number of parameters in this case needs to be: 435331
+# Total number of parameters: 305731
 
