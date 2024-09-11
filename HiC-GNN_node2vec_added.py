@@ -5,6 +5,7 @@ import utils
 import networkx as nx
 import os
 from models import Net
+from models import SmallerNet
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam
@@ -95,7 +96,8 @@ if __name__ == "__main__":
     # Train the HiC-GNN model using different conversion factors
     for conversion in conversions:
         print(f'Training model using conversion value {conversion}.')
-        model = Net()
+        #model = Net()
+        model = SmallerNet()
 
         total_params = sum(p.numel() for p in model.parameters())
         print(f'Total number of parameters: {total_params}')
