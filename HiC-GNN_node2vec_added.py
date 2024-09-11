@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     # Normalize the adjacency matrix using normalize.R script
     os.system(f'Rscript normalize.R {name}_matrix')
-    normed_matrix_path = f'Data/{name}_matrix_KR_normed_node2vec.txt'
+    normed_matrix_path = f'Data/{name}_matrix_KR_normed.txt' 
     print(f'Created normalized matrix for {filepath} as {normed_matrix_path}')
 
     normed = np.loadtxt(normed_matrix_path)
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     node2vec = Node2Vec(G, dimensions=512, walk_length=80, num_walks=10, workers=4)
     model = node2vec.fit(window=10, min_count=1, batch_words=4)
     embeddings = np.array([model.wv[str(node)] for node in G.nodes()])
-    embedding_path = f'Data/{name}_embeddings_node2vec.txt'
+    embedding_path = f'Data/{name}_embeddings_SmallerNet_node2vec.txt'  # Changed here for SmallerNet
     np.savetxt(embedding_path, embeddings)
     print(f'Created embeddings corresponding to {filepath} as {embedding_path}')
 
@@ -140,11 +140,11 @@ if __name__ == "__main__":
     print(f'Optimal dSCC: {repspear}')
 
     # Save the best model and results
-    with open(f'Outputs/{name}_node2vec_log.txt', 'w') as f:
+    with open(f'Outputs/{name}_SmallerNet_log.txt', 'w') as f:
         f.writelines([f'Optimal conversion factor: {repconv}\n', f'Optimal dSCC: {repspear}\n', f'Final MSE loss: {repmse}\n'])
 
-    torch.save(repnet.state_dict(), f'Outputs/{name}_node2vec_weights.pt')
-    utils.WritePDB(repmod * 100, f'Outputs/{name}_node2vec_structure.pdb')
+    torch.save(repnet.state_dict(), f'Outputs/{name}_SmallerNet_weights.pt')  # Changed here for SmallerNet
+    utils.WritePDB(repmod * 100, f'Outputs/{name}_SmallerNet_structure.pdb')  # Changed here for SmallerNet
 
-    print(f'Saved trained model to Outputs/{name}_node2vec_weights.pt')
-    print(f'Saved optimal structure to Outputs/{name}_node2vec_structure.pdb')
+    print(f'Saved trained model to Outputs/{name}_SmallerNet_weights.pt') # Changed here for SmallerNet
+    print(f'Saved optimal structure to Outputs/{name}_SmallerNet_structure.pdb') # Changed here for SmallerNet
