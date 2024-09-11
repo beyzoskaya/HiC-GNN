@@ -12,6 +12,9 @@ from scipy.stats import spearmanr
 import ast
 import argparse
 
+# larger values of conversion worked better for this model
+# The difference in MSE is very small, but Node2Vec has a slight edge in minimizing the error, meaning that it might have learned the data a bit more precisely
+# smaller errors but worse ranking
 if __name__ == "__main__":
     # Create necessary directories if they do not exist
     if not os.path.exists('Outputs'):
