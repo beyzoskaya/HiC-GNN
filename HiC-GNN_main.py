@@ -6,6 +6,7 @@ import networkx as nx
 import os
 from models import Net
 from models import SmallerNet
+from models import GATSmallerNet
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     line = LINE(G, embedding_size=512, order='second')  # Adjust order if needed
     line.train(batch_size=batch_size, epochs=epochs, verbose=1)
     embeddings = np.array([line.get_embeddings()[node] for node in G.nodes()])
-    embedding_path = f'Data/{name}_embeddings_SmallerNet_LINE.txt'  # Changed here for SmallerNet
+    embedding_path = f'Data/{name}_embeddings_GATSmallerNet_LINE.txt'  # Changed here for SmallerNet
     #embedding_path = f'Data/{name}_embeddings_LINE.txt'
     np.savetxt(embedding_path, embeddings)
     print(f'Created embeddings corresponding to {filepath} as {embedding_path}')
@@ -97,11 +98,12 @@ if __name__ == "__main__":
     for conversion in conversions:
         print(f'Training model using conversion value {conversion}.')
         #model = Net()
-        model = SmallerNet()
+        #model = SmallerNet()
+        model = GATSmallerNet()
 
         # Print the total number of parameters in the model
-        total_params = sum(p.numel() for p in model.parameters())
-        print(f'Total number of parameters: {total_params}')
+        #total_params = sum(p.numel() for p in model.parameters())
+        #print(f'Total number of parameters: {total_params}')
 
         criterion = MSELoss()
         optimizer = Adam(model.parameters(), lr=lr)
@@ -141,7 +143,7 @@ if __name__ == "__main__":
     print(f'Optimal dSCC: {repspear}')
 
     # Save the best model and results
-    with open(f'Outputs/{name}_Smalleret_LINE_log.txt', 'w') as f:
+    with open(f'Outputs/{name}_GATSmallerNet_LINE_log.txt', 'w') as f:
         f.writelines([f'Optimal conversion factor: {repconv}\n', f'Optimal dSCC: {repspear}\n', f'Final MSE loss: {repmse}\n'])
 
     #torch.save(repnet.state_dict(), f'Outputs/{name}_LINE_weights.pt') 
@@ -149,8 +151,8 @@ if __name__ == "__main__":
     #print(f'Saved trained model to Outputs/{name}__LINE_weights.pt')
     #print(f'Saved optimal structure to Outputs/{name}_LINE_structure.pdb') 
 
-    torch.save(repnet.state_dict(), f'Outputs/{name}_SmallerNet_LINE_weights.pt')  # Changed here for SmallerNet
-    utils.WritePDB(repmod * 100, f'Outputs/{name}_SmallerNet_LINE_structure.pdb')  # Changed here for SmallerNet
+    torch.save(repnet.state_dict(), f'Outputs/{name}_GATSmallerNet_LINE_weights.pt')  # Changed here for SmallerNet
+    utils.WritePDB(repmod * 100, f'Outputs/{name}_GATSmallerNet_LINE_structure.pdb')  # Changed here for SmallerNet
 
-    print(f'Saved trained model to Outputs/{name}_SmallerNet_LINE_weights.pt') # Changed here for SmallerNet
-    print(f'Saved optimal structure to Outputs/{name}_SmallerNet_LINE_structure.pdb') # Changed here for SmallerNet
+    print(f'Saved trained model to Outputs/{name}_GATSmallerNet_LINE_weights.pt') # Changed here for SmallerNet
+    print(f'Saved optimal structure to Outputs/{name}_GATSmallerNet_LINE_structure.pdb') # Changed here for SmallerNet
