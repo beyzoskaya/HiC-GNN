@@ -2,7 +2,8 @@ import torch
 from torch.nn import Linear
 from torch import cdist
 from layers import SAGEConv
-from layers import GATConv
+#from layers import GATConv
+from torch_geometric.nn import GATConv
 
 # GraphSAGE based model, builds upon SAGEConv layer 
 # Can be used for node classification, link prediction, graph-level prediction
@@ -101,7 +102,6 @@ class SmallerNet(torch.nn.Module):
 class GATNet(torch.nn.Module):
     def __init__(self):
         super(GATNet, self).__init__()
-        # CustomGATConv version (GAT)
         self.conv = GATConv(512, 512, heads=4)
         self.densea = Linear(512, 256)
         self.dense1 = Linear(256, 128)
@@ -137,8 +137,7 @@ class GATNet(torch.nn.Module):
 class GATSmallerNet(torch.nn.Module):
     def __init__(self):
         super(GATSmallerNet, self).__init__()
-        # CustomGATConv version for smaller model (GAT)
-        self.conv = GATConv(512, 256, heads=4)
+        self.conv = GATConv(512, 256, heads=4, concat=False)
         self.densea = Linear(256, 128)
         self.dense1 = Linear(128, 64)
         self.dense2 = Linear(64, 32)
