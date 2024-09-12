@@ -6,6 +6,7 @@ import networkx as nx
 import os
 from models import Net
 from models import SmallerNet
+from models import GATSmallerNet
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam
@@ -43,11 +44,20 @@ if __name__ == "__main__":
     resolution = args.resolution  # Resolution subfolder, e.g., 1mb
     chromosome = args.chromosome  # Chromosome, e.g., chr12
     
-    conversions = ast.literal_eval(args.conversions)
+    conversions = args.conversions
     batch_size = args.batchsize
     epochs = args.epochs
     lr = args.learningrate
     thresh = args.threshold
+    conversions = ast.literal_eval(conversions)
+
+    if len(conversions) == 3:
+        conversions = list(np.arange(conversions[0], conversions[2], conversions[1]))
+    elif len(conversions) == 1:
+        conversions = [conversions[0]]
+    else:
+        raise Exception('Invalid conversion input.')
+        sys.exit(2) 
 
     # Generate file path for the input data
     filename = f'{chromosome}_{resolution}.RAWobserved.txt'
@@ -85,7 +95,7 @@ if __name__ == "__main__":
     node2vec = Node2Vec(G, dimensions=512, walk_length=80, num_walks=10, workers=4)
     model = node2vec.fit(window=10, min_count=1, batch_words=4)
     embeddings = np.array([model.wv[str(node)] for node in G.nodes()])
-    embedding_path = f'Data/{name}_embeddings_SmallerNet_node2vec.txt'  # Changed here for SmallerNet
+    embedding_path = f'Data/{name}_embeddings_GATSmallerNet_node2vec.txt'  # Changed here for SmallerNet
     np.savetxt(embedding_path, embeddings)
     print(f'Created embeddings corresponding to {filepath} as {embedding_path}')
 
@@ -97,7 +107,8 @@ if __name__ == "__main__":
     for conversion in conversions:
         print(f'Training model using conversion value {conversion}.')
         #model = Net()
-        model = SmallerNet()
+        #model = SmallerNet()
+        model = GATSmallerNet()
 
         total_params = sum(p.numel() for p in model.parameters())
         print(f'Total number of parameters: {total_params}')
@@ -140,11 +151,11 @@ if __name__ == "__main__":
     print(f'Optimal dSCC: {repspear}')
 
     # Save the best model and results
-    with open(f'Outputs/{name}_SmallerNet_log.txt', 'w') as f:
+    with open(f'Outputs/{name}_GATSmallerNet_log.txt', 'w') as f:
         f.writelines([f'Optimal conversion factor: {repconv}\n', f'Optimal dSCC: {repspear}\n', f'Final MSE loss: {repmse}\n'])
 
-    torch.save(repnet.state_dict(), f'Outputs/{name}_SmallerNet_weights.pt')  # Changed here for SmallerNet
-    utils.WritePDB(repmod * 100, f'Outputs/{name}_SmallerNet_structure.pdb')  # Changed here for SmallerNet
+    torch.save(repnet.state_dict(), f'Outputs/{name}_GATSmallerNet_weights.pt')  # Changed here for SmallerNet
+    utils.WritePDB(repmod * 100, f'Outputs/{name}_GATSmallerNet_structure.pdb')  # Changed here for SmallerNet
 
-    print(f'Saved trained model to Outputs/{name}_SmallerNet_weights.pt') # Changed here for SmallerNet
-    print(f'Saved optimal structure to Outputs/{name}_SmallerNet_structure.pdb') # Changed here for SmallerNet
+    print(f'Saved trained model to Outputs/{name}_GATSmallerNet_weights.pt') # Changed here for SmallerNet
+    print(f'Saved optimal structure to Outputs/{name}_GATSmallerNet_structure.pdb') # Changed here for SmallerNet
