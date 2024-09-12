@@ -2,7 +2,7 @@ import torch
 from torch.nn import Linear
 from torch import cdist
 from layers import SAGEConv
-#from layers import GATConv
+from laers import CustomGATConv
 from torch_geometric.nn import GATConv
 
 # GraphSAGE based model, builds upon SAGEConv layer 
