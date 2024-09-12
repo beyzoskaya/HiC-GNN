@@ -43,11 +43,12 @@ if __name__ == "__main__":
     resolution = args.resolution  # Resolution subfolder, e.g., 1mb
     chromosome = args.chromosome  # Chromosome, e.g., chr12
     
-    conversions = ast.literal_eval(args.conversions)
+    conversions = args.conversions
     batch_size = args.batchsize
     epochs = args.epochs
     lr = args.learningrate
     thresh = args.threshold
+    conversions = ast.literal_eval(conversions)
 
     # Generate file path for the input data
     filename = f'{chromosome}_{resolution}.RAWobserved.txt'
