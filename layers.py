@@ -2,10 +2,12 @@ import torch
 from torch import Tensor
 from typing import Union, Tuple
 from torch.nn import Linear
-from torch_geometric.nn import MessagePassing
+from torch_geometric.nn import MessagePassing, GATConv
 from torch_sparse import SparseTensor, matmul
 from torch_geometric.typing import OptPairTensor, Adj, Size, OptTensor
 import torch.nn.functional as F
+
+# information is aggregated from a node’s neighbors and combined with its own features
 
 class SAGEConv(MessagePassing):
     def __init__(self, in_channels: Union[int, Tuple[int, int]],
@@ -16,7 +18,9 @@ class SAGEConv(MessagePassing):
         super(SAGEConv, self).__init__(**kwargs)
 
         self.in_channels = in_channels
+        #print(f"Number of input channels: {in_channels}")
         self.out_channels = out_channels
+        #print(f"Number of output channels: {out_channels}")
         self.normalize = normalize
         self.root_weight = root_weight
         
@@ -25,7 +29,7 @@ class SAGEConv(MessagePassing):
 
         self.lin_l = Linear(in_channels[0], out_channels, bias=bias)
         if self.root_weight:
-            self.lin_r = Linear(in_channels[1], out_channels, bias=False)
+            self.lin_r = Linear(in_channels[1], out_channels, bias=False) # fully connected layer
 
         self.reset_parameters
          
@@ -77,4 +81,48 @@ class SAGEConv(MessagePassing):
     def __repr__(self):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
-        
+
+
+class GATConv(MessagePassing):
+    def __init__(self, in_channels: Union[int, Tuple[int, int]],
+                 out_channels: int, heads: int = 4, concat: bool = True, dropout: float = 0.6, bias: bool = True, **kwargs):
+        kwargs.setdefault('aggr', 'add') 
+        super(GATConv, self).__init__(**kwargs)
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.heads = heads
+        self.concat = concat
+        self.dropout = dropout
+
+        if isinstance(in_channels, int):
+            in_channels = (in_channels, in_channels)
+
+        # multi-head attention
+        self.gat = GATConv(in_channels[0], out_channels, heads=heads, concat=concat, dropout=dropout, bias=bias)
+
+        self.lin = Linear(out_channels * heads if concat else out_channels, out_channels, bias=bias)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        self.lin.reset_parameters()
+        self.gat.reset_parameters()  # Reset the GAT layer's parameters
+
+    def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj, edge_attr: None = None, size: Size = None) -> Tensor:
+        if isinstance(x, Tensor):
+            x: OptPairTensor = (x, x)
+
+        # Use GATConv to perform attention-based message passing
+        out = self.gat(x[0], edge_index)
+
+        # Apply the linear transformation after aggregation
+        out = self.lin(out)
+
+        return out
+
+    def message_and_aggregate(self, adj_t: SparseTensor, x: OptPairTensor) -> Tensor:
+        pass # came from GATConv (torch)
+
+    def __repr__(self):
+        return '{}({}, {}, heads={})'.format(self.__class__.__name__, self.in_channels, self.out_channels, self.gat.heads)
