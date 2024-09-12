@@ -83,46 +83,46 @@ class SAGEConv(MessagePassing):
                                    self.out_channels)
 
 
-class GATConv(MessagePassing):
-    def __init__(self, in_channels: Union[int, Tuple[int, int]],
-                 out_channels: int, heads: int = 4, concat: bool = True, dropout: float = 0.6, bias: bool = True, **kwargs):
-        kwargs.setdefault('aggr', 'add') 
-        super(GATConv, self).__init__(**kwargs)
-
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.heads = heads
-        self.concat = concat
-        self.dropout = dropout
-
-        if isinstance(in_channels, int):
-            in_channels = (in_channels, in_channels)
-
-        # multi-head attention
-        self.gat = GATConv(in_channels[0], out_channels, heads=heads, concat=concat, dropout=dropout, bias=bias)
-
-        self.lin = Linear(out_channels * heads if concat else out_channels, out_channels, bias=bias)
-
-        self.reset_parameters()
+class CustomGATConv(GATConv):
+    def __init__(self, in_channels, out_channels, heads=4, concat=True, dropout=0.6, bias=True, **kwargs):
+        super(CustomGATConv, self).__init__(in_channels, out_channels, heads=heads, concat=concat, dropout=dropout, bias=bias, **kwargs)
+        
+        self.lin_l = Linear(out_channels * heads if concat else out_channels, out_channels, bias=bias)
+        
+        # custom normalization added specific to HiC-data
+        self.apply_custom_norm = True
 
     def reset_parameters(self):
-        self.lin.reset_parameters()
-        self.gat.reset_parameters()  # Reset the GAT layer's parameters
+        super().reset_parameters()
+        self.lin_l.reset_parameters()
 
-    def forward(self, x: Union[Tensor, OptPairTensor], edge_index: Adj, edge_attr: None = None, size: Size = None) -> Tensor:
-        if isinstance(x, Tensor):
-            x: OptPairTensor = (x, x)
+    def adjust_attention(self, edge_index, attention_scores):
+        # Custom normalization for exp: L1 normalization 
+        attention_sum = torch.sum(attention_scores, dim=1, keepdim=True)
+        normalized_attention = attention_scores / (attention_sum + 1e-8) 
+        return normalized_attention
 
-        # Use GATConv to perform attention-based message passing
-        out = self.gat(x[0], edge_index)
+    def forward(self, x: Tensor, edge_index: Tensor, edge_attr: Tensor = None) -> Tensor:
+       
+        # computing attention scores
+        x, edge_index, edge_attr = self.__distribute__(x, edge_index, edge_attr)
+        # apply atttention mechanism from GATConv
+        attention_scores, out = super().message_and_aggregate(edge_index, x)
 
-        # Apply the linear transformation after aggregation
-        out = self.lin(out)
+        if self.apply_custom_norm:
+            attention_scores = self.adjust_attention(edge_index, attention_scores)
+
+        # normalized aggregation
+        out = matmul(attention_scores, x)
+        # after aggregation, linear transformed applied
+        out = self.lin_l(out)
 
         return out
 
-    def message_and_aggregate(self, adj_t: SparseTensor, x: OptPairTensor) -> Tensor:
-        pass # came from GATConv (torch)
-
-    def __repr__(self):
-        return '{}({}, {}, heads={})'.format(self.__class__.__name__, self.in_channels, self.out_channels, self.gat.heads)
+    def message_and_aggregate(self, edge_index: Tensor, x: Tensor) -> Tensor:
+        attention_scores, out = super().message_and_aggregate(edge_index, x)
+        
+        if self.apply_custom_norm:
+            attention_scores = self.adjust_attention(edge_index, attention_scores)
+        
+        return attention_scores, out
