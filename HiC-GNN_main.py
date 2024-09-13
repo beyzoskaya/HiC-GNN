@@ -50,6 +50,14 @@ if __name__ == "__main__":
     thresh = args.threshold
     conversions = ast.literal_eval(conversions)
 
+    if len(conversions) == 3:
+        conversions = list(np.arange(conversions[0], conversions[2], conversions[1]))
+    elif len(conversions) == 1:
+        conversions = [conversions[0]]
+    else:
+        raise Exception('Invalid conversion input.')
+        sys.exit(2) 
+
     # Generate file path for the input data
     filename = f'{chromosome}_{resolution}.RAWobserved.txt'
     filepath = os.path.join(dataset_folder, subdataset, resolution, filename)
