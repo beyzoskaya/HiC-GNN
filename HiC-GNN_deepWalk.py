@@ -110,23 +110,25 @@ if __name__ == "__main__":
     #plt.savefig('deepWalk.png')
 
     # Clustering with KMeans
-    n_clusters = 5  # Number of clusters (communities)
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-    node_clusters = kmeans.fit_predict(embeddings)
+    kmeans = KMeans(n_clusters=4)
+    clusters = kmeans.fit_predict(embeddings)
 
-    # Reduce the dimensionality of embeddings to 2D using PCA
-    pca = PCA(n_components=2)
-    embeddings_2d = pca.fit_transform(embeddings)
+    # 3D Visualization of embeddings using the first three dimensions
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
 
-    # Visualize the clustering
-    plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c=node_clusters, cmap='viridis', s=100, alpha=0.8)
-    plt.title('2D PCA of DeepWalk Embeddings with K-Means Clustering')
-    plt.xlabel('PCA Component 1')
-    plt.ylabel('PCA Component 2')
-    plt.colorbar(scatter)
+    # Scatter plot in 3D using the first three embedding dimensions
+    scatter = ax.scatter(embeddings[:, 0], embeddings[:, 1], embeddings[:, 2], c=clusters, cmap='viridis')
+    ax.set_title(f'3D Plot of DeepWalk Embeddings with K-Means Clustering for {name}')
+    ax.set_xlabel('Embedding Dimension 1')
+    ax.set_ylabel('Embedding Dimension 2')
+    ax.set_zlabel('Embedding Dimension 3')
+
+    # Add a color bar for clusters
+    fig.colorbar(scatter, ax=ax, label='Cluster Label')
+
     plt.show()
-    plt.savefig('deepWalk_clustering_5_clusters.png')
+    plt.savefig('deepWalk_3D.png')
 
 
     # Load input data with embeddings
