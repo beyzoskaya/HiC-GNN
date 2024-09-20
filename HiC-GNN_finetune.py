@@ -91,6 +91,8 @@ if __name__ == "__main__":
     tempmodels, tempspear, tempmse, model_list = [], [], [], []
 
     model = Net()
+    print("Model Architecture:")
+    print(model)
 
     # For pretrain (fine-tuning)
     if args.pretrained:
@@ -99,16 +101,20 @@ if __name__ == "__main__":
     
     # Freeze all params
     for param in model.parameters():
-        param.required_grad = False
+        param.requires_grad = False
     
-    # Unfreeze last layer
-    for param in model.fc.parameters():
-        param.required_grad = True
+    # Unfreeze last layer (dense3 in Net model)
+    for name, param in model.named_parameters():
+        if "dense3" in name:
+            param.requires_grad = True
+            print(f"Unfreezing layer: {name}")  
     
     optimizer = Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=1e-5)
 
     total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f'Total number of parameters: {total_params}')
+    print(f'Total trainable parameters: {trainable_params}')
 
     criterion = MSELoss()
     oldloss, lossdiff = 1, 1
