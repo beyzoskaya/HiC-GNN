@@ -180,7 +180,7 @@ class GATSmallerNet(torch.nn.Module):
 
 ### Variational Auto Encoder Versions ###
 
-class Encoder(nn.Module):
+class Encoder(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, latent_dim, heads=4):
         super(Encoder, self).__init__()
         self.conv1 = GATConv(input_dim, hidden_dim, heads=heads, concat=False)
