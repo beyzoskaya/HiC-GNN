@@ -4,7 +4,7 @@ from torch.nn import Linear, Dropout
 from torch import cdist
 from layers import SAGEConv
 from layers import CustomGATConv
-from torch_geometric.nn import GATConv
+from torch_geometric.nn import GATConv, GCNConv
 
 # GraphSAGE based model, builds upon SAGEConv layer 
 # Can be used for node classification, link prediction, graph-level prediction
@@ -225,59 +225,80 @@ class GATSmallerNet(torch.nn.Module):
 ### Variational Auto Encoder Versions ###
 
 class Encoder(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, latent_dim, heads=2):
+    def __init__(self):
         super(Encoder, self).__init__()
-        self.conv = GATConv(input_dim, hidden_dim, heads=heads, concat=True)  
-        self.densea = Linear(hidden_dim * heads, 128)  
-        self.dense_mu = Linear(128, latent_dim) 
-        self.dense_logvar = Linear(128, latent_dim) 
+        self.conv1 = GATConv(512, 512, heads=2, concat=True)  # Output becomes 1024
+        self.conv2 = GCNConv(1024, 512)  # Reduces output size back to 512
+        self.densea = Linear(512, 128)  # Further reduces to 128
+        self.dense_latent = Linear(128, 64)  # Latent space of 64
         self.dropout = Dropout(p=0.3)
 
     def forward(self, x, edge_index):
-        x = self.conv(x, edge_index)
+        print(f"Shape of x: {x.shape}")
+        # GATConv layer
+        x = self.conv1(x, edge_index)
+        print(f"After GATConv1, x.shape: {x.shape}")
         x = F.relu(x)
         x = self.dropout(x)
-        x = self.densea(x)
+        
+        # GCNConv layer
+        x = self.conv2(x, edge_index)
+        print(f"After GCNConv2, x.shape: {x.shape}")
         x = F.relu(x)
         x = self.dropout(x)
-        mu = self.dense_mu(x) 
-        logvar = self.dense_logvar(x) 
-        return mu, logvar
 
-# Decoder using Linear layers to reconstruct embeddings
+        # Dense layers to latent space
+        x = self.densea(x)
+        print(f"After densea, x.shape: {x.shape}")
+        x = F.relu(x)
+        x = self.dropout(x)
+        latent = self.dense_latent(x)
+        print(f"Latent space, latent.shape: {latent.shape}")
+        return latent
+
 class Decoder(torch.nn.Module):
-    def __init__(self, latent_dim, hidden_dim, output_dim, heads=2):
+    def __init__(self):
         super(Decoder, self).__init__()
-        self.dense1 = Linear(latent_dim, hidden_dim)  
-        self.dense2 = Linear(hidden_dim, hidden_dim * heads)  # Expand to match hidden_dim * heads
-        self.conv1 = GATConv(hidden_dim * heads, output_dim, heads=heads, concat=True)  # Apply GATConv
-        self.dense_output = Linear(output_dim * heads, 512)  # Final output layer
+        # Dense layers to go back to larger dimensions
+        self.dense1 = Linear(64, 128)
+        self.dense2 = Linear(128, 512)
+        self.conv1 = GCNConv(512, 512)  # GCNConv layer
+        self.conv2 = GATConv(512, 512, heads=2, concat=True)  # Final GATConv for reconstruction
+        self.dropout = Dropout(p=0.3)
 
     def forward(self, z, edge_index):
-        # z will have shape (N, latent_dim) where latent_dim = 64
-        x = F.relu(self.dense1(z))  # Shape becomes (N, hidden_dim)
-        x = F.relu(self.dense2(x))  # Shape becomes (N, hidden_dim * heads)
-        x = self.conv1(x, edge_index)  # Apply GATConv, shape becomes (N, output_dim * heads)
-        x = self.dense_output(x)  # Final linear layer, shape becomes (N, 512)
+        # Dense layers from latent space
+        x = F.relu(self.dense1(z))
+        print(f"After dense1 in Decoder, x.shape: {x.shape}")
+        x = self.dropout(x)
+        x = F.relu(self.dense2(x))
+        print(f"After dense2 in Decoder, x.shape: {x.shape}")
+        x = self.dropout(x)
+        
+        # GCNConv layer
+        x = self.conv1(x, edge_index)
+        print(f"After GCNConv in Decoder, x.shape: {x.shape}")
+        x = F.relu(x)
+        x = self.dropout(x)
+        
+        # GATConv layer for final reconstruction
+        x = self.conv2(x, edge_index)
+        print(f"After GATConv in Decoder, x.shape: {x.shape}")
         return x
 
-# VAE + GAT model combining the Encoder and Decoder
-class VAE_GAT(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, latent_dim, output_dim, heads=2):
-        super(VAE_GAT, self).__init__()
-        self.encoder = Encoder(input_dim, hidden_dim, latent_dim, heads=heads)  
-        self.decoder = Decoder(latent_dim, hidden_dim, output_dim, heads=heads) 
-    
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5 * logvar)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-    
+class AutoencoderGAT_GCN(torch.nn.Module):
+    def __init__(self):
+        super(AutoencoderGAT_GCN, self).__init__()
+        self.encoder = Encoder()
+        self.decoder = Decoder()
+
     def forward(self, x, edge_index):
-        mu, logvar = self.encoder(x, edge_index)
-        z = self.reparameterize(mu, logvar)
-        recon_x = self.decoder(z, edge_index)
-        
-        pairwise_distances = torch.cdist(recon_x, recon_x, p=2)  
-        return recon_x, mu, logvar, pairwise_distances
+        latent = self.encoder(x, edge_index)
+        print(f"Latent representation from Encoder, latent.shape: {latent.shape}")
+        recon_x = self.decoder(latent, edge_index)
+        print(f"Reconstructed x, recon_x.shape: {recon_x.shape}")
+        pairwise_distances = torch.cdist(recon_x, recon_x, p=2)
+        print(f"Pairwise distances, pairwise_distances.shape: {pairwise_distances.shape}")
+        return pairwise_distances
+
 
