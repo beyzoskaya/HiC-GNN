@@ -87,13 +87,11 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(weights_path))
     print(f'Loaded model weights from {weights_path}')
 
-    truth = utils.cont2dist(data.y, conversion)
     model.eval()
-
+    truth = utils.cont2dist(data.y, conversion)
     coords = model.get_model(data.x, data.edge_index)
     idx = torch.triu_indices(data.y.shape[0], data.y.shape[1], offset=1)
     dist_truth = truth[idx[0, :], idx[1, :]]
-    coords = model.get_model(data.x, data.edge_index)
     dist_out = torch.cdist(coords, coords)[idx[0, :], idx[1, :]]
 
     # Calculate Spearman's correlation (dSCC)
