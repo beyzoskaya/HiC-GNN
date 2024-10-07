@@ -190,7 +190,7 @@ class GATNetReduced(torch.nn.Module):
 class GATNetMoreReduced(torch.nn.Module):
     def __init__(self):
         super(GATNetMoreReduced, self).__init__()
-        self.conv = GATConv(256, 256, heads=2, concat=True) 
+        self.conv = GATConv(512, 256, heads=2, concat=True) 
         self.densea = Linear(512, 128) 
         self.dense1 = Linear(128, 32)   
         self.dense2 = Linear(32, 3)     
