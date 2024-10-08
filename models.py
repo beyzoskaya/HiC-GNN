@@ -100,12 +100,12 @@ class SmallerNet(torch.nn.Module):
 
 ### Graph Attention Network (GAT) Versions ###
 
-class GATNet(torch.nn.Module):
+class GATNet(torch.nn.Module): # Total number of parameters: 436355
     def __init__(self):
         super(GATNet, self).__init__()
         # number of heads= 4 is overfitted the HiC dataset (I tried with GM12878)
-        self.conv = GATConv(512, 512, heads=2, concat=True)
-        self.densea = Linear(1024, 256)
+        self.conv = GATConv(512, 512)
+        self.densea = Linear(512, 256)
         self.dense1 = Linear(256, 128)
         self.dense2 = Linear(128, 64)
         self.dense3 = Linear(64, 3)
@@ -139,6 +139,45 @@ class GATNet(torch.nn.Module):
         x = x.relu()
         x = self.dense3(x)
         return x
+    
+class GATNetConvLayerChanged(torch.nn.Module): # Total number of parameters: 175171
+    def __init__(self):
+        super(GATNetConvLayerChanged, self).__init__()
+        self.conv = GATConv(512, 256)  # Reduce hidden dim to 256 instead of 512
+        self.densea = Linear(256, 128) 
+        self.dense1 = Linear(128, 64)
+        self.dense2 = Linear(64, 32)
+        self.dense3 = Linear(32, 3)
+
+        self.dropout = Dropout(p=0.4)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+        x = self.dropout(x)
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dropout(x)
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = cdist(x, x, p=2)
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        return x
+
   
 class GATNetReduced(torch.nn.Module):
     def __init__(self):
@@ -219,7 +258,7 @@ class GATNetMoreReduced(torch.nn.Module):
         x = x.relu()
         x = self.dense1(x)
         x = x.relu()
-        x = self.dense2(x)
+        x = self.dense2(x) 
         return x
 
     
