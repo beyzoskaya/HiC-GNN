@@ -5,7 +5,7 @@ import utils
 import networkx as nx
 import os
 from models import Net
-from models import  GATNetMoreReduced, GATNet, GATNetConvLayerChanged, GATNetHeadsChanged, GATNetHeadsChangedLeakyReLU, GATNetHeadsChanged4Layers, GATNetHeadsChanged4LayerEmbedding256
+from models import  GATNetMoreReduced, GATNet, GATNetConvLayerChanged, GATNetHeadsChanged, GATNetHeadsChangedLeakyReLU, GATNetHeadsChanged4Layers, GATNetHeadsChanged4LayerEmbedding256, GATNetHeadsChanged4LayerEmbedding256Dense, GATNetHeadsChanged4LayerEmbedding512Dense, TwoGATNetHeadsChanged4LayerEmbedding512Dense
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam, AdamW
@@ -17,7 +17,9 @@ import json
 import matplotlib.pyplot as plt
 import random
 
-# larger values of conversion worked better for this model
+# dSCC values more sensitive to global structure
+# pairwise distances are more sensitive to local structure
+
 # The difference in MSE is very small, but Node2Vec has a slight edge in minimizing the error, meaning that it might have learned the data a bit more precisely
 # smaller errors but worse ranking
 
@@ -39,8 +41,8 @@ def calculate_dRMSD(truth_distances, predicted_distances):
     return dRMSD.item()
 
 if __name__ == "__main__":
-    base_data_dir = 'Data/Data_GATNetHeadsChanged4LayerEmbedding256_lr_0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878'
-    base_output_dir = 'Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878'
+    base_data_dir = 'Data/Data_GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878'
+    base_output_dir = 'Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878'
     if not os.path.exists(base_output_dir):
         os.makedirs(base_output_dir)
     if not os.path.exists(base_data_dir):
@@ -56,8 +58,8 @@ if __name__ == "__main__":
     #parser.add_argument('-c', '--conversions', type=str, default='[.1,.1,2]', help='List of conversion constants.')
     parser.add_argument('-bs', '--batchsize', type=int, default=128, help='Batch size for embeddings generation.')
     parser.add_argument('-ep', '--epochs', type=int, default=10, help='Number of epochs used for embeddings generation.')
-    parser.add_argument('-lr', '--learningrate', type=float, default=0.001, help='Learning rate for training GCNN.')
-    parser.add_argument('-th', '--threshold', type=float, default=1e-8, help='Loss threshold for training termination.')
+    parser.add_argument('-lr', '--learningrate', type=float, default=0.0009, help='Learning rate for training GCNN.')
+    parser.add_argument('-th', '--threshold', type=float, default=1e-7, help='Loss threshold for training termination.')
     
     args = parser.parse_args()
 
@@ -112,11 +114,12 @@ if __name__ == "__main__":
 
     # Node2vec model for creating embeddings
     #node2vec = Node2Vec(G, dimensions=512, walk_length=80, num_walks=10, workers=4,seed=42)
-    node2vec = Node2Vec(G, dimensions=256, walk_length=80, num_walks=10, workers=4,seed=42)
-    model = node2vec.fit(window=10, min_count=1, batch_words=4)
+    #model = node2vec.fit(window=10, min_count=1, batch_words=4)
+    node2vec = Node2Vec(G, dimensions=512, walk_length=100, num_walks=20,p=2,q=0.5, workers=1, seed=42) # num workers and seed 42 together give deterministic results
+    model= node2vec.fit(window=15, min_count=1, batch_words=4)
     embeddings = np.array([model.wv[str(node)] for node in G.nodes()])
     print(f"Shape for node2vec embeddings: {embeddings.shape}")
-    embedding_path = f'Data/Data_GATNetHeadsChanged4LayerEmbedding256_lr_0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_embeddings_node2vec_GAT.txt' 
+    embedding_path = f'Data/Data_GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_embeddings_node2vec_GAT.txt' 
     np.savetxt(embedding_path, embeddings)
     print(f'Created embeddings corresponding to {filepath} as {embedding_path}')
 
@@ -128,22 +131,22 @@ if __name__ == "__main__":
 
     # Train the HiC-GNN model using fixed conversion value
     print(f"Training model using conversion value {conversion}")
-    model = GATNetHeadsChanged4LayerEmbedding256() 
+    model = GATNetHeadsChanged4LayerEmbedding512Dense() 
 
     total_params = sum(p.numel() for p in model.parameters())
     print(f'Total number of parameters: {total_params}')
 
     
     criterion = MSELoss()
-    #optimizer = Adam(model.parameters(), lr=lr)
-    optimizer = AdamW(model.parameters(), lr=lr)
+    optimizer = Adam(model.parameters(), lr=lr)
+    #optimizer = AdamW(model.parameters(), lr=lr)
     oldloss, lossdiff = 1,1
     truth = utils.cont2dist(data.y, conversion)
 
     
     # Training loop
     epoch = 0
-    max_epoch = 400
+    #max_epoch = 400
     while lossdiff > thresh:
     #for epoch in range(max_epoch):
         model.train()
@@ -168,7 +171,7 @@ if __name__ == "__main__":
     plt.ylabel('Loss')
     plt.title(f'Loss Curve for {name}')
     plt.legend()
-    loss_plot_path = f'Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_loss_plot.png'
+    loss_plot_path = f'Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_loss_plot.png'
     plt.savefig(loss_plot_path)  
     print(f'Saved loss plot as {loss_plot_path}')
 
@@ -185,14 +188,14 @@ if __name__ == "__main__":
     print(f'Optimal dSCC: {repspear}')
     print(f'dRMSD for {name}: {dRMSD_value}')
 
-    with open(f'Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_node2vec_log_GAT.txt', 'w') as f:
+    with open(f'Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_node2vec_log_GAT.txt', 'w') as f:
         f.writelines([f'Optimal conversion factor: {conversion}\n', f'Optimal dSCC: {repspear}\n', f'Final MSE loss: {repmse}\n', f'dRMSD: {dRMSD_value}\n'])
     
-    torch.save(model.state_dict(), f'Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_node2vec_GAT_weights.pt')
-    utils.WritePDB(repmod * 100, f'Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_node2vec_GAT_structure.pdb')
+    torch.save(model.state_dict(), f'Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_node2vec_GAT_weights.pt')
+    utils.WritePDB(repmod * 100, f'Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_node2vec_GAT_structure.pdb')
 
-    print(f'Saved trained model to Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_node2vec_GAT_weights.pt')
-    print(f'Saved optimal structure to Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/{name}_node2vec_GAT_structure.pdb')
+    print(f'Saved trained model to Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_node2vec_GAT_weights.pt')
+    print(f'Saved optimal structure to Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/{name}_node2vec_GAT_structure.pdb')
 
 
     # Calculate and save the variance of contact counts
@@ -202,7 +205,7 @@ if __name__ == "__main__":
     
     # Save log variance in a separate file
     log_variance_data = {}
-    log_variance_path = "Outputs/GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878/log_variances_node2vec_GAT.json"
+    log_variance_path = "Outputs/GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878/log_variances_node2vec_GAT.json"
     
     if os.path.exists(log_variance_path):
         with open(log_variance_path, "r") as f:
