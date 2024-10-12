@@ -352,6 +352,154 @@ class GATNetHeadsChanged4LayerEmbedding256(torch.nn.Module):  # Updated node2vec
         x = self.dense3(x)
         
         return x
+# Total number of parameters: 307267
+class GATNetHeadsChanged4LayerEmbedding256Dense(torch.nn.Module):  # Updated node2vec embeddings 256 rather than 512 and one more Linear layer added
+    def __init__(self):
+        super(GATNetHeadsChanged4LayerEmbedding256Dense, self).__init__()
+        self.conv = GATConv(256, 256, heads=2, concat=True)  # Two heads, concat=True, output becomes 512
+        self.densea = Linear(512, 256)  
+        self.dense1 = Linear(256, 128)
+        self.dense2 = Linear(128, 64)
+        self.dense3 = Linear(64, 32)
+        self.dense4 = Linear(32,3) 
+
+        self.dropout = Dropout(p=0.3)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+  
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+    
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+        
+        return x
+
+# Total number of parameters: 438339
+class GATNetHeadsChanged4LayerEmbedding512Dense(torch.nn.Module):  # Updated node2vec embeddings 256 rather than 512 and one more Linear layer added
+    def __init__(self):
+        super(GATNetHeadsChanged4LayerEmbedding512Dense, self).__init__()
+        self.conv = GATConv(512, 256, heads=2, concat=True)  # Two heads, concat=True, output becomes 512
+        self.densea = Linear(512, 256)  
+        self.dense1 = Linear(256, 128)
+        self.dense2 = Linear(128, 64)
+        self.dense3 = Linear(64, 32)
+        self.dense4 = Linear(32,3) 
+
+        self.dropout = Dropout(p=0.3)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+  
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = x.relu()
+    
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+        
+        return x
+
+# Total number of parameters: 702019
+class TwoGATNetHeadsChanged4LayerEmbedding512Dense(torch.nn.Module):
+    def __init__(self):
+        super(TwoGATNetHeadsChanged4LayerEmbedding512Dense, self).__init__()
+        self.conv1 = GATConv(512, 256, heads=2, concat=True)  # First GATConv layer
+        self.conv2 = GATConv(512, 256, heads=2, concat=True)  # New second GATConv layer
+        self.densea = Linear(512, 256)  
+        self.dense1 = Linear(256, 128)
+        self.dense2 = Linear(128, 64)
+        self.dense3 = Linear(64, 32)
+        self.dense4 = Linear(32, 3)
+        self.dropout = Dropout(p=0.3)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = x.relu()
+        x = self.conv2(x, edge_index) 
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dropout(x)
+        
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+  
+        x = cdist(x, x, p=2) 
+        return x
+    
+    def get_model(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = x.relu()
+        x = self.conv2(x, edge_index) 
+        x = x.relu()
+        x = self.densea(x)
+        x = x.relu()
+        x = self.dense1(x)
+        x = x.relu()
+        x = self.dense2(x)
+        x = x.relu()
+        x = self.dense3(x)
+        x = x.relu()
+        x = self.dense4(x)
+        return x
 
 
   
