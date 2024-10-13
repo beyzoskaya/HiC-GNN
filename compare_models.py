@@ -8,11 +8,16 @@ model_folders = [
     'GATNetConvLayerChanged_GM12878_evaluation',
     'GATNetConvLayerChanged_lr_0.0001_GM12878_evaluation',
     'GATNetHeadsChangedLeakyReLU_lr_0.0001_epoch_500_GM12878_evaluation',
-    'node2vec_GAT_moreReduced_overfitted_GM12878_evaluation',
     'node2vec_GAT_reduced_overfitted_GM12878_evaluation',
     'GATNetHeadsChanged4LayerEmbedding256_lr_0.0.001_dropout_0.3_threshold_1e-8_AdamW_GM12878_evaluation',
     'GATNetHeadsChanged4LayerEmbedding256Dense_lr_0.0.0009_dropout_0.3_threshold_1e-8_GM12878_evaluation',
-    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_GM12878_evaluation'
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_GM12878_evaluation',
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0008_dropout_0.3_threshold_1e-7_GM12878_evaluation',
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.0009_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878_evaluation',
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.001_dropout_0.3_threshold_1e-7_node2vecParamsChanged_GM12878_evaluation',
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.001_dropout_0.3_threshold_1e-8_node2vecParamsChanged_GM12878_evaluation',
+    'GATNetHeadsChanged4LayerEmbedding512Dense_lr_0.0.002_dropout_0.3_threshold_1e-8_node2vecParamsChanged_GM12878_evaluation',
+    'GATNetHeadsChanged4Layers_lr_0.0.0009_dropout_0.3_threshold_1e-8_node2vecParamsChanged_GM12878_evaluation'
     
 ]
 
