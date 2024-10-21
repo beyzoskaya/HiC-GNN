@@ -90,19 +90,19 @@ if __name__ == "__main__":
 
     name = f'{subdataset}_{chromosome}_{resolution}'
     filepath = os.path.join(dataset_folder, subdataset, resolution, f'{chromosome}_{resolution}_RAWobserved.txt')
-    normed_matrix_path = 'Data/GATNetHeadsChanged4LayersLeakyReLU_lr_0.0.0003_dropout_0.3_threshold_1e-8_p_6_q_2_num_walks_50_GM12878_batch_size_128/GM12878_chr1_1mb_matrix_KR_normed.txt'
+    normed_matrix_path = 'Data/GATNetHeadsChanged4LayersLeakyReLU_lr_0.0.0003_dropout_0.3_threshold_1e-8_p_6_q_2_num_walks_50_GM12878_batch_size_128/GM12878_chr8_1mb_matrix_KR_normed.txt'
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     space = [
-        Real(0.5, 10, name='p'),        # Range for p
-        Real(0.1, 5, name='q'),         # Range for q
-        Integer(10, 100, name='num_walks')  # Range for num_walks
-    ]
+    Real(1, 5, name='p'),        # Reduce the range for p
+    Real(0.5, 3, name='q'),      # Reduce the range for q
+    Integer(10, 50, name='num_walks')  # Reduce the range for num_walks
+]
 
     print("Starting Bayesian Optimization...")
-    res = gp_minimize(objective, space, n_calls=30, random_state=42)
+    res = gp_minimize(objective, space, n_calls=20, random_state=42)
     print("Bayesian Optimization completed!")
 
     print(f"Best hyperparameters: p={res.x[0]}, q={res.x[1]}, num_walks={res.x[2]}")
