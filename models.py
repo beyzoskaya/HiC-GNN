@@ -352,7 +352,75 @@ class GATNetHeadsChanged4LayersLeakyReLU(torch.nn.Module):  # Updated with 4 lin
         x = self.dense3(x)
         
         return x
-  
+
+# Total number of parameters: 148483
+class GATNetReduced2LayersLeakyReLU(torch.nn.Module):
+    def __init__(self):
+        super(GATNetReduced2LayersLeakyReLU, self).__init__()
+        self.conv = GATConv(512, 128, heads=2, concat=True)  
+        
+        self.dense1 = Linear(256, 64)  
+        self.dense2 = Linear(64, 3)    
+        
+        self.dropout = Dropout(p=0.1)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)  
+        x = F.leaky_relu(x)         
+        x = self.dropout(x)           #
+
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+        
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = F.leaky_relu(x)
+
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+        
+        return x
+
+# Total number of parameters: 165385
+class OnlyGATNetLeakyReLU(torch.nn.Module):
+    def __init__(self):
+        super(OnlyGATNetLeakyReLU, self).__init__()
+        self.conv1 = GATConv(512, 128, heads=2, concat=True)
+        self.conv2 = GATConv(256, 64, heads=2, concat=True)
+        self.conv3 = GATConv(128, 3, heads=1, concat=False) 
+
+        self.dropout = Dropout(p=0.1)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+
+        x = self.conv3(x, edge_index)
+
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = F.leaky_relu(x)
+
+        x = self.conv2(x, edge_index)
+        x = F.leaky_relu(x)
+
+        x = self.conv3(x, edge_index)
+
+        return x
+    
 # Total number of parameters: 428291
 class GATNetHeadsChanged3LayersLeakyReLU(torch.nn.Module):  # Updated with 3 linear layers
     def __init__(self):
@@ -361,6 +429,84 @@ class GATNetHeadsChanged3LayersLeakyReLU(torch.nn.Module):  # Updated with 3 lin
         self.densea = Linear(512, 256)  
         self.dense1 = Linear(256, 128)
         self.dense2 = Linear(128, 3)
+
+        self.dropout = Dropout(p=0.3)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+        
+        x = self.densea(x)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+        
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+  
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = F.leaky_relu(x)
+    
+        x = self.densea(x)
+        x = F.leaky_relu(x)
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+        
+        return x
+
+# Total number of parameters: 411651
+class GATNetHeadsChanged3LayersLeakyReLUv2(torch.nn.Module):  # Updated number of neurons
+    def __init__(self):
+        super(GATNetHeadsChanged3LayersLeakyReLUv2, self).__init__()
+        self.conv = GATConv(512, 256, heads=2, concat=True)
+        self.densea = Linear(512, 256)  
+        self.dense1 = Linear(256, 64)
+        self.dense2 = Linear(64, 3)
+
+        self.dropout = Dropout(p=0.3)
+
+    def forward(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+        
+        x = self.densea(x)
+        x = F.leaky_relu(x)
+        x = self.dropout(x)
+        
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+  
+        x = cdist(x, x, p=2)  
+        return x
+
+    def get_model(self, x, edge_index):
+        x = self.conv(x, edge_index)
+        x = F.leaky_relu(x)
+    
+        x = self.densea(x)
+        x = F.leaky_relu(x)
+        x = self.dense1(x)
+        x = F.leaky_relu(x)
+        x = self.dense2(x)
+        
+        return x
+
+# Total number of parameters: 337795
+class GATNetHeadsChanged3LayersLeakyReLUv3(torch.nn.Module):  # Updated number of neurons
+    def __init__(self):
+        super(GATNetHeadsChanged3LayersLeakyReLUv3, self).__init__()
+        self.conv = GATConv(512, 256, heads=2, concat=True)
+        self.densea = Linear(512, 128)  
+        self.dense1 = Linear(128, 64)
+        self.dense2 = Linear(64, 3)
 
         self.dropout = Dropout(p=0.3)
 
