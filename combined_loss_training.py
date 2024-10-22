@@ -23,10 +23,11 @@ def calculate_dRMSD(truth_distances, predicted_distances):
     squared_diff = torch.pow(truth_distances - predicted_distances, 2) # ((y_true - y_pred)^2)
     mean_squared_diff = torch.mean(squared_diff) # ((1/n)(y_true - y_pred)^2) --> normalized
     dRMSD = torch.sqrt(mean_squared_diff) # (((1/n)(y_true - y_pred)^2))^(-1/2)
+    return dRMSD.item() 
 
 if __name__ == "__main__":
-    base_data_dir = 'Data/GATNetHeadsChanged3LayersLeakyReLUv2_lr_0.0.0005_dropout_0.3_threshold_1e-8_p_4_q_2.5_GM12878_combined_loss'
-    base_output_dir = 'Outputs/GATNetHeadsChanged3LayersLeakyReLUv2_lr_0.0.0005_dropout_0.3_threshold_1e-8_p_4_q_2.5_GM12878_combined_loss'
+    base_data_dir = 'Data/GATNetHeadsChanged3LayersLeakyReLUv2_lr_0.0.0005_dropout_0.3_threshold_1e-8_p_4_q_2.5_GM12878_combined_loss_epoch_1000'
+    base_output_dir = 'Outputs/GATNetHeadsChanged3LayersLeakyReLUv2_lr_0.0.0005_dropout_0.3_threshold_1e-8_p_4_q_2.5_GM12878_combined_loss_epoch_1000'
 
     if not os.path.exists(base_output_dir):
         os.makedirs(base_output_dir)
@@ -39,10 +40,10 @@ if __name__ == "__main__":
     parser.add_argument('resolution', type=str, help='Resolution subfolder name (e.g., 1mb).')
     parser.add_argument('chromosome', type=str, help='Chromosome name (e.g., chr12).')
     parser.add_argument('-bs', '--batchsize', type=int, default=128, help='Batch size for embeddings generation.')
-    parser.add_argument('-ep', '--epochs', type=int, default=500, help='Number of epochs used for embeddings generation.')
+    parser.add_argument('-ep', '--epochs', type=int, default=1000, help='Number of epochs used for embeddings generation.')
     parser.add_argument('-lr', '--learningrate', type=float, default=0.0005, help='Learning rate for training GCNN.')
     parser.add_argument('-th', '--threshold', type=float, default=1e-8, help='Loss threshold for training termination.')
-    parser.add_argument('-alpha', '--alpha', type=float, default=0.5, help='Weight for dSCC loss component.')
+    parser.add_argument('-alpha', '--alpha', type=float, default=1, help='Weight for dSCC loss component.')
 
     args = parser.parse_args()
 
@@ -101,6 +102,7 @@ if __name__ == "__main__":
     mse_history = [] # mse values
     dRMSD_history = [] # dRMSD values
 
+    oldloss = float('inf') 
     for epoch in range(epochs):
         model.train()
         optimizer.zero_grad()
@@ -116,18 +118,27 @@ if __name__ == "__main__":
 
         mse_loss = criterion_mse(out.float(), truth.float())
 
+        """
+
+        [[0, 1, 2],  --> idx gives [(0,1), (0,2), (1,2)]
+        [1, 0, 3], 
+        [2, 3, 0]]
+        
+        """
+
         
         idx = torch.triu_indices(data.y.shape[0], data.y.shape[1], offset=1)
         dist_truth = truth[idx[0, :], idx[1, :]]
         coords = model.get_model(data.x, data.edge_index)
-        dist_out = torch.cdist(coords, coords)[idx[0, :], idx[1, :]]
+        dist_out = torch.cdist(coords, coords)[idx[0, :], idx[1, :]] # calculates pairwise Euclidean distances between predicted 3D coords
 
         SpRho, _ = spearmanr(dist_truth.detach().numpy(), dist_out.detach().numpy())
         if np.isnan(SpRho):
+            print(f"dSCC value is None")
             SpRho = 0
 
         dRMSD_value = calculate_dRMSD(dist_truth, dist_out)
-        dSCC_loss = -SpRho # minimizing 1 - dSCC
+        dSCC_loss = (1 - SpRho) # minimizing 1 - dSCC
         combined_loss = mse_loss + alpha * dSCC_loss 
         lossdiff = abs(oldloss - combined_loss.item())
         combined_loss.backward()
