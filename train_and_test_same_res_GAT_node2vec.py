@@ -126,6 +126,7 @@ if __name__ == "__main__":
             Contrastive loss penalizes the absolute difference between the predicted and true distances
             focusing on relative differences rather than absolute magnitudes.
             true pairwise distance between nodes i and j - predicted pairwise distance between nodes i and j --> contrastive loss
+            More sensitive loss on local structure
             """
             total_loss = 0.0
             contrastive_loss = torch.mean(torch.abs(dist_truth - dist_out))
