@@ -5,7 +5,7 @@ import utils
 import networkx as nx
 import os
 from models import GATNetHeadsChanged3LayersLeakyReLUv2, GATNetHeadsChanged3LayersLeakyReLUv2EmbeddingDim256, GATNetHeadsChanged3LayersLeakyReLUv2EmbeddingDim128,GATNetHeadsChanged4LayersLeakyReLU, GATNetHeadsChanged4Layers, GATNetHeadsChangedLeakyReLU
-from models import  GATNetHeadsChanged4LayersReLU_LayerNorm, GATNetHeadsChanged4LayersReLU_LayerNormEmbed512, GATNetHeadsChanged4LayersReLU_LayerNormEmbed512WithResiduals, GATNetSelectiveResidualsUpdatedLayerNorm,GATNetSelectiveResidualsUpdated
+from models import  GATNetMultiLayer, GATNetHeadsChanged4LayersReLU_LayerNormEmbed512, GATNetHeadsChanged4LayersReLU_LayerNormEmbed512WithResiduals, GATNetSelectiveResidualsUpdatedLayerNorm,GATNetSelectiveResidualsUpdated, GATUNet
 import torch
 from torch.nn import MSELoss
 from torch.optim import Adam
@@ -13,6 +13,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from scipy.stats import spearmanr,pearsonr
 import argparse
 import matplotlib.pyplot as plt
+from torch_geometric.nn import GNNExplainer
 
 """
 grid search options 
@@ -67,8 +68,8 @@ def scale_invariant_mse(predictions, targets):
     return si_mse_loss
 
 if __name__ == "__main__":
-    base_data_dir = 'Data/GATNetSelectiveResidualsUpdatedLayerNorm_gelu_activation_embedding_512_batch_128_lr_0.0008_threshold_1e-7_p_1.75_q_0.4_walk_length_50_num_walks_150_window_35_GM12878_generalization_pearson_loss'
-    base_output_dir = 'Outputs/GATNetSelectiveResidualsUpdatedLayerNorm_gelu_activation_embedding_512_batch_128_lr_0.0008_threshold_1e-7_p_1.75_q_0.4_walk_length_50_num_walks_150_window_35_GM12878_generalization_pearson_loss'
+    base_data_dir = 'Data/GATNetSelectiveResidualsUpdated_embedding_512_batch_128_lr_0.001_threshold_1e-8_p_1.75_q_0.4_walk_length_50_num_walks_150_GM12878_generalization_pearson_combined_loss_dynamic_alpha_500kb'
+    base_output_dir = 'Generalization_500kb_resolution_GM12878/GATNetSelectiveResidualsUpdated_embedding_512_batch_128_lr_0.001_threshold_1e-8_p_1.75_q_0.4_walk_length_50_num_walks_150_GM12878_generalization_pearson_combined_loss_dynamic_alpha_500kb'
 
     if not(os.path.exists(base_data_dir)):
         os.makedirs(base_data_dir)
@@ -81,8 +82,8 @@ if __name__ == "__main__":
     parser.add_argument('list_untrained', type=str, help='File path for list format of raw Hi-C corresponding to embeddings_untrained.')
     parser.add_argument('-bs', '--batchsize', type=int, default=128, help='Batch size for embeddings generation.')
     parser.add_argument('-ep', '--epochs', type=int, default=1000, help='Number of epochs used for model training.')
-    parser.add_argument('-lr', '--learningrate', type=float, default=0.0008, help='Learning rate for training GCNN.')
-    parser.add_argument('-thresh', '--loss_diff_threshold', type=float, default=1e-7, help='Loss difference threshold for early stopping.')
+    parser.add_argument('-lr', '--learningrate', type=float, default=0.001, help='Learning rate for training GCNN.') 
+    parser.add_argument('-thresh', '--loss_diff_threshold', type=float, default=1e-8, help='Loss difference threshold for early stopping.')
     parser.add_argument('-print_interval', type=int, default=10, help='Interval for printing MSE and dSCC values.')
     #parser.add_argument('-alpha', '--alpha', type=float, default=0.1, help='Weight for dSCC loss component in combined loss.')
 
@@ -94,6 +95,7 @@ if __name__ == "__main__":
     epochs = args.epochs
     lr = args.learningrate
     #alpha = args.alpha
+    epochs = args.epochs
     loss_diff_threshold = args.loss_diff_threshold
     print_interval = args.print_interval
     conversion = 1
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     if not(os.path.isfile(f'{base_data_dir}/{name_trained}_matrix.txt')):
         print(f'Failed to find matrix form of {filepath_trained} from {base_data_dir}/{name_trained}_matrix.txt.')
         adj_trained = utils.convert_to_matrix(list_trained)
-        np.fill_diagonal(adj_trained, 0)
+        np.fill_diagonal(adj_trained, 0) 
         np.savetxt(f'{base_data_dir}/{name_trained}_matrix.txt', adj_trained, delimiter='\t')
         print(f'Created matrix form of {filepath_trained} as {base_data_dir}/{name_trained}_matrix.txt.')
     matrix_trained = np.loadtxt(f'{base_data_dir}/{name_trained}_matrix.txt')
@@ -119,7 +121,7 @@ if __name__ == "__main__":
     if not(os.path.isfile(f'{base_data_dir}/{name_untrained}_matrix.txt')):
         print(f'Failed to find matrix form of {filepath_untrained} from {base_data_dir}/{name_untrained}_matrix.txt.')
         adj_untrained = utils.convert_to_matrix(list_untrained)
-        np.fill_diagonal(adj_untrained, 0)
+        np.fill_diagonal(adj_untrained, 0) # self loops handled with diagonal elements
         np.savetxt(f'{base_data_dir}/{name_untrained}_matrix.txt', adj_untrained, delimiter='\t')
         print(f'Created matrix form of {filepath_untrained} as {base_data_dir}/{name_untrained}_matrix.txt.')
     matrix_untrained = np.loadtxt(f'{base_data_dir}/{name_untrained}_matrix.txt')
@@ -149,7 +151,7 @@ if __name__ == "__main__":
 
         # embedding creation for trained
         node2vec_trained = Node2Vec(G, dimensions=512, walk_length=150, num_walks=50, p=1.75, q=0.4, workers=1, seed=42)
-        embeddings_trained = node2vec_trained.fit(window=35, min_count=1, batch_words=4)
+        embeddings_trained = node2vec_trained.fit(window=25, min_count=1, batch_words=4)
         embeddings_trained = np.array([embeddings_trained.wv[str(node)] for node in G.nodes()])
         np.savetxt(f'{base_data_dir}/{name_trained}_embeddings.txt', embeddings_trained)
         print(f'Created embeddings corresponding to {filepath_trained} as {base_data_dir}/{name_trained}_embeddings.txt.')
@@ -163,7 +165,7 @@ if __name__ == "__main__":
 
         # embedding creation for untrained
         node2vec_untrained = Node2Vec(G, dimensions=512, walk_length=150, num_walks=50, p=1.75, q=0.4, workers=1, seed=42)
-        embeddings_untrained = node2vec_untrained.fit(window=35, min_count=1, batch_words=4)
+        embeddings_untrained = node2vec_untrained.fit(window=25, min_count=1, batch_words=4)
         embeddings_untrained = np.array([embeddings_untrained.wv[str(node)] for node in G.nodes()])
         np.savetxt(f'{base_data_dir}/{name_untrained}_embeddings.txt', embeddings_untrained)
         print(f'Created embeddings corresponding to {filepath_untrained} as {base_data_dir}/{name_untrained}_embeddings.txt.')
@@ -179,11 +181,12 @@ if __name__ == "__main__":
     # Train the model using a fixed number of epochs and combined loss
     if not(os.path.isfile(f'{base_output_dir}/{name_trained}_weights.pt')):
         print(f'Failed to find model weights corresponding to {filepath_trained} from {base_output_dir}/{name_trained}_weights.pt')
-        model = GATNetSelectiveResidualsUpdatedLayerNorm()
-        #weight_decay_value = 1e-7
+        model = GATNetSelectiveResidualsUpdated()
+
         criterion_mse = MSELoss()
         optimizer = Adam(model.parameters(), lr=lr)
 
+        val_loss_history = []
         loss_history = []  
         dSCC_history = []
         mse_history = []  
@@ -209,6 +212,7 @@ if __name__ == "__main__":
             dist_truth_np = dist_truth.detach().numpy()
             coords = model.get_model(data_trained.x.float(), data_trained.edge_index)
             dist_out = torch.cdist(coords, coords)[idx[0, :], idx[1, :]]  # Pairwise Euclidean distances
+            #print(f"Computed pairwise distances, shape: {dist_out.shape}")
 
             dist_out_np = dist_out.detach().numpy() 
             
@@ -216,7 +220,10 @@ if __name__ == "__main__":
             PearsonR, _ = pearsonr(dist_truth.detach().numpy(), dist_out_np)
             
             PearsonR_loss =  (1 - PearsonR)
-            total_loss = mse_loss + 0.2 * PearsonR_loss
+            alpha_initial = 0.1
+            alpha = min(1.0, alpha_initial + (1.0 / (mse_loss.item() + 1e-6)))
+            total_loss = mse_loss + alpha * PearsonR_loss
+            #total_loss = mse_loss - 0.2 * PearsonR_loss
     
             loss_diff = abs(old_loss - total_loss.item())
             total_loss.backward()
@@ -233,11 +240,11 @@ if __name__ == "__main__":
             #loss_history.append(combined_loss.item())
             loss_history.append(total_loss.item())
             SpRho = spearmanr(dist_truth, dist_out.detach().numpy())[0]
+
+            #print(f"Iteration [{iteration}]:")
+            #print(f"  True Distances - Mean: {dist_truth.mean().item():.4f}, Std: {dist_truth.std().item():.4f}, Min: {dist_truth.min().item():.4f}, Max: {dist_truth.max().item():.4f}")
+            #print(f"  Predicted Distances - Mean: {dist_out.mean().item():.4f}, Std: {dist_out.std().item():.4f}, Min: {dist_out.min().item():.4f}, Max: {dist_out.max().item():.4f}")
             dSCC_history.append(SpRho)
-            #SpRho = spearmanr(dist_truth, dist_out.detach().numpy())[0]
-            if np.isnan(SpRho):
-                print(f"Warning: dSCC is NaN")
-                SpRho = 0 
 
             #dSCC_loss = (1 - SpRho)  # Minimize 1 - dSCC
             #combined_loss = mse_loss + alpha * dSCC_loss  # Combined loss
@@ -246,9 +253,9 @@ if __name__ == "__main__":
             #    print(f"Epoch [{epoch}/{epochs}], MSE Loss: {mse_loss.item()}, dSCC: {SpRho}")
         
             if iteration % print_interval == 0:
-                print(f"Iteration [{iteration}], MSE Loss: {total_loss.item()}, dSCC: {SpRho}, Loss Diff: {loss_diff}")
+                print(f"Iteration [{iteration}], Total Loss: {mse_loss.item()}, dSCC: {SpRho}, Loss Diff: {loss_diff}")
 
-            final_mse_loss = total_loss.item()
+            final_mse_loss = mse_loss.item()
             final_combined_loss = total_loss.item()
             iteration += 1
 
@@ -291,8 +298,18 @@ if __name__ == "__main__":
         plt.legend()
         plt.savefig(f'{base_output_dir}/{name_trained}_mse_dSCC_plot.png')
 
+        # Plot Training and Validation Loss
+        plt.figure(figsize=(10, 6))
+        plt.plot(loss_history, label='Training Loss', color='blue')
+        plt.plot(val_loss_history, label='Validation Loss', color='orange')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title(f'Training and Validation Loss for {name_trained}')
+        plt.legend()
+        plt.savefig(f'{base_output_dir}/{name_trained}_training_validation_loss_plot.png')
+
     # Generalize to untrained data
-    model = GATNetSelectiveResidualsUpdatedLayerNorm()
+    model = GATNetSelectiveResidualsUpdated()
     model.load_state_dict(torch.load(f'{base_output_dir}/{name_trained}_weights.pt'))
     model.eval()
 
@@ -305,6 +322,15 @@ if __name__ == "__main__":
     coords = model.get_model(data_untrained_fit.x.float(), data_untrained_fit.edge_index)
     out = torch.cdist(coords, coords)
     dist_out = out[idx[0, :], idx[1, :]].detach().numpy()
+
+    #val_mse_loss = criterion_mse(out.float(), truth.float())
+    #PearsonR_val, _ = pearsonr(dist_truth.detach().numpy(), out.detach().numpy())
+    #PearsonR_loss_val = (1 - PearsonR_val)
+    #alpha_initial = 0.1
+    #alpha_val = min(1.0, alpha_initial + (1.0 / (val_mse_loss.item() + 1e-6)))
+    #val_total_loss = val_mse_loss + alpha_val * PearsonR_loss_val
+    #val_loss_history.append(val_total_loss)
+    #print(f'Validation Loss: {val_total_loss.item()}, Validation MSE: {val_mse_loss.item()}, Validation Pearson Correlation Loss: {PearsonR_loss_val}')
 
     SpRho_generalization = spearmanr(dist_truth, dist_out)[0]
     print(f'Optimal dSCC for generalized data: {SpRho_generalization}')
