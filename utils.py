@@ -33,7 +33,8 @@ def load_input(input, features):
   np.fill_diagonal(adj_mat,0)
   truth = adj_mat
   truth = torch.tensor(truth,dtype=torch.double)
-  graph = nx.from_numpy_matrix(adj_mat).to_undirected()
+  #graph = nx.from_numpy_matrix(adj_mat).to_undirected()
+  graph = nx.from_numpy_array(adj_mat).to_undirected() # changed to numpy_array for running in my desktop !!!!!!!
   num_nodes = adj_mat.shape[0]
   edges = list(graph.edges(data=True))
   edge_index = np.empty((len(edges),2))
@@ -78,6 +79,7 @@ def cont2dist(adj,factor):
   dist = torch.nan_to_num(dist,posinf=max)
   return dist/max
 
+# Procrustes analysis on different resolution embeddings 
 def domain_alignment(list1, list2, embeddings1, embeddings2):
   idx1 = np.unique(list1[:,0]).astype(int)
   diff1 = min(idx1[1:] - idx1[:-1])
@@ -105,6 +107,44 @@ def domain_alignment(list1, list2, embeddings1, embeddings2):
   fitembed = np.matmul(embeddings2, transform)
 
   return fitembed
+
+def domain_alignment_filtered(list1, list2, embeddings1, embeddings2):
+    idx1 = np.unique(list1[:, 0]).astype(int)
+    diff1 = min(idx1[1:] - idx1[:-1])
+
+    idx2 = np.unique(list2[:, 0]).astype(int)
+    diff2 = min(idx2[1:] - idx2[:-1])
+
+    bins = (diff1 / (2 * diff2)).astype(int)
+
+    A_list = []
+    B_list = []
+
+    for i in range(bins + 1):
+        # Adjust indices to avoid out-of-bounds errors
+        Aidx = np.where(np.isin(idx2 + i * diff2, idx1))[0]
+        Bidx = np.where(np.isin(idx1, idx2 + i * diff2))[0]
+
+        # Ensure indices are valid for embeddings
+        Aidx = Aidx[Aidx < embeddings2.shape[0]]
+        Bidx = Bidx[Bidx < embeddings1.shape[0]]
+
+        if len(Aidx) > 0 and len(Bidx) > 0:
+            A_list.append(embeddings2[Aidx, :])
+            B_list.append(embeddings1[Bidx, :])
+
+    # Check if A_list and B_list have valid content
+    if not A_list or not B_list:
+        raise ValueError("No valid alignment indices found. Check your input data.")
+
+    A = np.concatenate(tuple(A_list))
+    B = np.concatenate(tuple(B_list))
+
+    transform = orthogonal_procrustes(A, B)[0]
+    fitembed = np.matmul(embeddings2, transform)
+
+    return fitembed
+
 
 def WritePDB(positions, pdb_file, ctype = "0"):
   '''Save the result as a .pdb file'''
