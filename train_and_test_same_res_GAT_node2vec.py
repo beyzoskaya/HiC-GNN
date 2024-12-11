@@ -12,11 +12,11 @@ import argparse
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    if not(os.path.exists('500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878')):
-        os.makedirs('500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878')
+    if not(os.path.exists('250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878')):
+        os.makedirs('250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878')
 
-    if not(os.path.exists('Data_same_resolution/Data_500kb_GAT_GM12878')):
-        os.makedirs('Data_same_resolution/Data_500kb_GAT_GM12878')
+    if not(os.path.exists('Data_same_resolution/Data_250kb_GAT_GM12878')):
+        os.makedirs('Data_same_resolution/Data_250kb_GAT_GM12878')
 
     # Argument parsing
     parser = argparse.ArgumentParser(description='Generalize a trained model to new data using the same resolution.')
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     list_untrained = np.loadtxt(filepath_untrained)
 
     for name, list_data, is_trained in [(name_trained, list_trained, True), (name_untrained, list_untrained, False)]:
-        data_dir = 'Data_same_resolution/Data_500kb_GAT_GM12878'
+        data_dir = 'Data_same_resolution/Data_250kb_GAT_GM12878'
         adj_matrix_path = f'{data_dir}/{name}_matrix.txt'
         
         if not(os.path.isfile(adj_matrix_path)):
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     data_trained = utils.load_input(normed_trained, embeddings_trained)
 
-    model_weight_path = f'500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_trained}_weights.pt'
+    model_weight_path = f'250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_trained}_weights.pt'
     if not(os.path.isfile(model_weight_path)):
         print(f'Failed to find model weights corresponding to {filepath_trained} from {model_weight_path}')
 
@@ -130,9 +130,9 @@ if __name__ == "__main__":
             """
             total_loss = 0.0
             contrastive_loss = torch.mean(torch.abs(dist_truth - dist_out))
-            print(f"Contrastive loss: {contrastive_loss}")
+            #print(f"Contrastive loss: {contrastive_loss}")
             total_loss = total_loss + 0.1 * contrastive_loss
-            print(f"Total loss: {total_loss}")
+            #print(f"Total loss: {total_loss}")
 
             lossdiff = abs(oldloss - total_loss.item())
             total_loss.backward()
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         plt.legend()
         plt.grid(axis='y', linestyle='--', alpha=0.7)
         plt.tight_layout()
-        plt.savefig(f'500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_trained}_training_loss_plot.png')
+        plt.savefig(f'250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_trained}_training_loss_plot.png')
         plt.show()
 
     model = GATNetSelectiveResidualsUpdated()
@@ -200,10 +200,10 @@ if __name__ == "__main__":
     plt.xlabel('Pairwise Distances Index')
     plt.ylabel('Distance')
     plt.legend()
-    plt.savefig(f'500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_distance_comparison_plot.png')
+    plt.savefig(f'250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_distance_comparison_plot.png')
 
-    utils.WritePDB(repmod * 100, f'500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_generalized_structure.pdb')
+    utils.WritePDB(repmod * 100, f'250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_generalized_structure.pdb')
 
-    with open(f'500kb_train_tested_on_500kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_generalized_log.txt', 'w') as f:
+    with open(f'250kb_train_tested_on_250kb/Outputs_GATNetSelectiveResidualsUpdated_lr_0.0001_threshold_1e-8_GM12878/{name_untrained}_generalized_log.txt', 'w') as f:
         line1 = f'Optimal dSCC: {repspear}\n'
         f.writelines([line1])
