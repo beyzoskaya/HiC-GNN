@@ -1,4 +1,4 @@
-# HiC-GNN: A Generalizable Model for 3D Chromosome Reconstruction Using Graph Convolutional Neural Networks
+# GAT-HiC Efficient Reconstruction of 3D Chromosome Structure Via Graph Attention Neural Network
 ------------------------------------------------------------------------------------------------------------------------------------
 **OluwadareLab,**
 **University of Colorado, Colorado Springs**
