@@ -63,6 +63,11 @@ To run the script `HiC-GAT_generalize_directly.py`, use the following command in
 python HiC-GAT_generalize_directly.py <list_trained> <list_untrained> [-bs BATCHSIZE] [-ep EPOCHS] [-lr LEARNINGRATE] [-loss_diff_threshold LOSS_DIFF_THRESHOLD]
 ```
 
+Example:
+```bash
+python HiC_GAT_generalize_directly.py "Hi-C_dataset/GM12878/1mb/chr18_1mb_RAWobserved.txt" "Hi-C_dataset/GM12878/500kb/chr18_500kb.RAWobserved.txt"
+```
+
 ### 2. `train_and_test_on_same_res.py`
 
 #### Purpose:
