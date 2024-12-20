@@ -29,7 +29,12 @@ pip install -r requirements.txt
 ### 1. `HiC-GAT_generalize_directly.py`
 
 #### Purpose:
-This file focuses on the process of training a Graph Attention Network (GAT) model on Hi-C data embeddings, followed by generalizing the trained model to untrained Hi-C data.
+This file focuses on the process of training a Graph Attention Network (GAT) model on Hi-C data embeddings, followed by generalizing the trained model to untrained Hi-C data. The model is trained using a combined loss function that includes:
+
+- **MSE Loss**: Minimizes the error between predicted and true distances of genomic loci.
+- **Pearson Correlation Loss**: Encourages the model to maintain structural relationships by maximizing the Pearson correlation between predicted and true distances.
+
+The final loss is a weighted sum of these two components, with a dynamic weight (`alpha`) applied to the Pearson correlation loss to balance both terms during training. This helps the model generalize across different Hi-C resolutions.
 
 #### Inputs:
 - **`list_trained`**: A file containing the trained Hi-C data in a list format.
