@@ -105,3 +105,7 @@ To run the script `train_and_test_on_same_res.py`, use the following command in 
 ```bash
 python train_and_test_on_same_res.py <list_trained> <list_untrained> [-bs BATCHSIZE] [-ep EPOCHS] [-lr LEARNINGRATE] [-th THRESHOLD]
 ```
+Example:
+```bash
+python train_and_test_on_same_res.py "Hi-C_dataset/GM12878/1mb/chr18_1mb_RAWobserved.txt" "Hi-C_dataset/GM12878/1mb/chr18_1mb_RAWobserved.txt"
+```
