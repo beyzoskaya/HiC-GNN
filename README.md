@@ -23,35 +23,73 @@ cd GAT-HiC
 pip install -r requirements.txt
 ```
 
+----------------------------------------------------------------------------------------------------------------------------------	
+## Key Scripts 
 
-1. Clone this repository locally using the command ``git clone https://github.com/OluwadareLab/HiC-GNN.git && cd HiC-GNN``. 
-2. Pull the HiC-GNN docker image from docker hub using the command ``docker pull oluwadarelab/hicgnn:latest``. This may take a few minutes. Once finished, check that the image was sucessfully pulled using ``docker image ls``.
-3. Run the HiC-GNN container and mount the present working directory to the container using ``docker run --rm -it --name hicgnn_cont -v ${PWD}:/HiC-GNN oluwadarelab/hicgnn``. 
+### 1. `HiC-GAT_generalize_directly.py`
 
---------------------------------------------------------------------	
-## **Content of Folders:**
-- Data: This folder contains two Hi-C contact maps in the coordinate list format for chromosome 19 of the GM12878 cell line- one at 1mb resolution and one at 500kb resolution. 
+#### Purpose:
+This file focuses on the process of training a Graph Attention Network (GAT) model on Hi-C data embeddings, followed by generalizing the trained model to untrained Hi-C data.
 
---------------------------------------------------------------------	
-## **Scripts**
+#### Inputs:
+- **`list_trained`**: A file containing the trained Hi-C data in a list format.
+- **`list_untrained`**: A file containing the untrained Hi-C data in a list format.
+- **`batchsize`** (optional): The batch size used for embeddings generation (default is 128).
+- **`epochs`** (optional): The number of epochs for model training (default is 1000).
+- **`learningrate`** (optional): The learning rate for training (default is 0.001).
+- **`loss_diff_threshold`** (optional): A threshold for early stopping based on loss difference (default is 1e-8).
+  
+#### Outputs:
+- **Trained Model**: The model weights are saved as `weights.pt` in the output directory.
+- **Predicted Structure**: The 3D structure of the predicted distances is saved in a `.pdb` file.
+- **Training and Validation Plots**: Graphs showing the MSE loss, Spearman correlation, and training/validation loss curves.
+- **Results File**: A text file containing the optimal dSCC (Spearman correlation), final loss, and final combined loss.
 
-There are three python scripts used in this study. We describe their purposes and usage below.
+#### Workflow:
+1. **Preprocessing**: The Hi-C matrices are normalized using the KR normalization, and node2vec embeddings are generated for both trained and untrained data.
+2. **Model Training**: A GAT model is trained on the preprocessed Hi-C data using a combined loss function that minimizes MSE and a regularization term (Spearman correlation loss).
+3. **Generalization**: Once the model is trained, it is tested on untrained Hi-C data, and the performance is evaluated using Spearman's correlation coefficient.
+4. **Outputs**: The optimal model and the predicted structure are saved, and performance metrics (e.g., dSCC) are reported.
 
-### HiC-GNN_main.py
-This script takes a single Hi-C contact map as an input and utilizes it to train a HiC-GNN model. 
+#### Usage:
+To run the script `HiC-GAT_generalize_directly.py`, use the following command in the terminal:
 
-**Inputs**: 
-1. A Hi-C contact map in either matrix format or coordinate list format.
+```bash
+python HiC-GAT_generalize_directly.py <list_trained> <list_untrained> [-bs BATCHSIZE] [-ep EPOCHS] [-lr LEARNINGRATE] [-loss_diff_threshold LOSS_DIFF_THRESHOLD]
+```
 
-**Outputs**: 
-1. A .pdb file of the predicted 3D structure corresponding to the input file in ```Outputs/input_filename_structure.pdb```.
-2. A .txt file depicting the optimal conversion value, the dSCC value of the output structure, and final MSE loss of the trained model in ```Outputs/input_filename_log.txt```.
-3. A .pt file of the trained model weights corresponding to the input file in ```Outputs/input_filename_weights.pt```
-4. A .txt of the normalized Hi-C contact map corresponding to the KR normalization of the input file in ```Data/input_filename_matrix_KR_normed.txt```.
-5. A .txt file of the embeddings corresponding to the input file in ```Data/input_filename_embeddings.txt```. 
-6. (In the case that the input file was in list format) A .txt file of the input file in matrix format in ```Data/input_filename_matrix.txt```.
+### 2. `train_and_test_on_same_res.py`
 
-**Usage**: ```python HiC-GNN_main.py input_filepath```
+#### Purpose:
+This script trains a Graph Attention Network (GAT) model on Hi-C data embeddings and then generalizes the model to untrained Hi-C data at the same resolution. It focuses on predicting pairwise genomic distances from the embeddings and adjacency matrices and evaluates the model using Spearman's correlation.
+
+#### Inputs:
+- **`list_trained`**: A file containing the trained Hi-C data in list format.
+- **`list_untrained`**: A file containing the untrained Hi-C data in list format.
+- **`batchsize`** (optional): The batch size used for embeddings generation (default is 128).
+- **`epochs`** (optional): The number of epochs for embeddings generation (default is 10).
+- **`learningrate`** (optional): The learning rate for training (default is 0.0001).
+- **`threshold`** (optional): The loss threshold for early stopping (default is 1e-8).
+
+#### Outputs:
+- **Trained Model**: The model weights are saved as `{name_trained}_weights.pt` in the output directory.
+- **Training Loss Plot**: A plot of training loss over iterations saved as `{name_trained}_training_loss_plot.png`.
+- **Predicted Structure**: The predicted 3D structure of the untrained data is saved in a `.pdb` file (`{name_untrained}_generalized_structure.pdb`).
+- **Distance Comparison Plot**: A plot comparing the true vs predicted distances for the untrained data saved as `{name_untrained}_distance_comparison_plot.png`.
+- **Results File**: A text file containing the optimal dSCC (Spearman correlation), saved as `{name_untrained}_generalized_log.txt`.
+
+#### Workflow:
+1. **Preprocessing**: The Hi-C matrices for both trained and untrained datasets are either loaded from existing files or generated from raw data if not already present. These matrices are normalized using KR normalization, and Node2Vec embeddings are generated for both datasets.
+2. **Model Training**: A GAT model is trained on the preprocessed Hi-C data (trained dataset) using a combined loss function that minimizes MSE and a contrastive loss term that penalizes absolute differences in predicted and true distances.
+3. **Testing**: After training, the model is tested on the same resolution HiC data, and the performance is evaluated using Spearman's correlation coefficient.
+4. **Outputs**: The optimal model weights are saved, and the predicted structure for the untrained Hi-C data is stored in `.pdb` format. Performance metrics (e.g., dSCC) are reported, and training loss plots are saved to visualize the training process.
+
+#### Usage:
+To run the script `train_and_test_on_same_res.py`, use the following command in the terminal:
+```bash
+python train_and_test_on_same_res.py <list_trained> <list_untrained> [-bs BATCHSIZE] [-ep EPOCHS] [-lr LEARNINGRATE] [-th THRESHOLD]
+```
+
 
 * **positional arguments**: <br />
 &nbsp;&nbsp;&nbsp;&nbsp;```input_filepath```: Path of the input file. <br />
