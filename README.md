@@ -8,10 +8,21 @@ GATHiC is a method developed to predict three-dimensional chromosome structure f
 The Hi-C data used in this project consists of contact maps for each species, where each contact map represents the interaction frequencies between genomic loci across chromosomes. These interaction matrices are crucial for predicting the three-dimensional (3D) structure of chromosomes, providing a foundation for the GATHiC method to infer the 3D coordinates from these interaction patterns.
 
 ## Dependencies
-The required libraries for running this project are listed in the `requirements.txt` file. Simply install the dependencies using the following command:
+The required libraries for running this project are listed in the `requirements.txt` file. To install all the necessary libraries, follow these steps:
 
-' ```bash '
+### Step 1: Clone the Repository
+First, clone the repository to your local machine:
+
+```bash
+git clone https://github.com/seferlab/GAT-HiC.git
+```
+### Step 2: Set Up the Environment
+Navigate to the project directory and install the dependencies from the `requirements.txt` file:
+```bash
+cd GAT-HiC
 pip install -r requirements.txt
+```
+
 
 1. Clone this repository locally using the command ``git clone https://github.com/OluwadareLab/HiC-GNN.git && cd HiC-GNN``. 
 2. Pull the HiC-GNN docker image from docker hub using the command ``docker pull oluwadarelab/hicgnn:latest``. This may take a few minutes. Once finished, check that the image was sucessfully pulled using ``docker image ls``.
