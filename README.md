@@ -1,26 +1,17 @@
 # GAT-HiC Efficient Reconstruction of 3D Chromosome Structure Via Graph Attention Neural Network
 ------------------------------------------------------------------------------------------------------------------------------------
-**OluwadareLab,**
-**University of Colorado, Colorado Springs**
+## Overview
+GATHiC is a method developed to predict three-dimensional chromosome structure from Hi-C interaction data. GATHiC can generalize to unseen Hi-C datasets, enabling prediction across various cell populations, restriction enzymes, and Hi-C resolutions. This method combines the unsupervised vertex embedding technique Node2vec with an attention-based graph neural network to predict the 3D coordinates of genomic loci.
 
-----------------------------------------------------------------------
-**Developers:** <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Van Hovenga<br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Department of Mathematics <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;University of Colorado, Colorado Springs <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Email: vhovenga@uccs.edu <br /><br />
+## HiC Data
+------------------------------------------------------------------------------------------------------------------------------------
+The Hi-C data used in this project consists of contact maps for each species, where each contact map represents the interaction frequencies between genomic loci across chromosomes. These interaction matrices are crucial for predicting the three-dimensional (3D) structure of chromosomes, providing a foundation for the GATHiC method to infer the 3D coordinates from these interaction patterns.
 
-**Contact:** <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Oluwatosin Oluwadare, PhD <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Department of Computer Science <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;University of Colorado, Colorado Springs <br />
-		 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Email: ooluwada@uccs.edu 
- 
- --------------------------------------------------------------------	
-## **Description of HiC Data**:
---------------------------------------------------------------------	
-## **Build Instructions:**
-HiC-GNN runs in a Docker-containerized environment. Before cloning this repository and attempting to build, install the [Docker engine](https://docs.docker.com/engine/install/). To install and build HiC-GNN follow these steps.
+## Dependencies
+The required libraries for running this project are listed in the `requirements.txt` file. Simply install the dependencies using the following command:
+
+' ```bash '
+pip install -r requirements.txt
 
 1. Clone this repository locally using the command ``git clone https://github.com/OluwadareLab/HiC-GNN.git && cd HiC-GNN``. 
 2. Pull the HiC-GNN docker image from docker hub using the command ``docker pull oluwadarelab/hicgnn:latest``. This may take a few minutes. Once finished, check that the image was sucessfully pulled using ``docker image ls``.
