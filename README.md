@@ -10,13 +10,13 @@ The Hi-C data used in this project consists of contact maps for each species, wh
 ## Dependencies
 The required libraries for running this project are listed in the `requirements.txt` file. To install all the necessary libraries, follow these steps:
 
-### Step 1: Clone the Repository
+### Clone the Repository
 First, clone the repository to your local machine:
 
 ```bash
 git clone https://github.com/seferlab/GAT-HiC.git
 ```
-### Step 2: Set Up the Environment
+### Set Up the Environment
 Navigate to the project directory and install the dependencies from the `requirements.txt` file:
 ```bash
 cd GAT-HiC
