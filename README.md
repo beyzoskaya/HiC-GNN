@@ -67,6 +67,11 @@ python HiC-GAT_generalize_directly.py <list_trained> <list_untrained> [-bs BATCH
 
 #### Purpose:
 This script trains a Graph Attention Network (GAT) model on Hi-C data embeddings and then generalizes the model to untrained Hi-C data at the same resolution. It focuses on predicting pairwise genomic distances from the embeddings and adjacency matrices and evaluates the model using Spearman's correlation.
+The model is trained using a **Contrastive Loss** that minimizes the absolute difference between the true and predicted distances. The loss function is defined as:
+
+- **Contrastive Loss**: Penalizes the absolute difference between the predicted and true pairwise distances, encouraging the model to preserve relative genomic distances.
+
+The final training objective is to minimize this contrastive loss to better capture the underlying genomic structure.
 
 #### Inputs:
 - **`list_trained`**: A file containing the trained Hi-C data in list format.
